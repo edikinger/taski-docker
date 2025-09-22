@@ -1,6 +1,6 @@
 # Создать образ на основе базового слоя,
-# который содержит файлы ОС и интерпретатор Python 3.9.
-FROM python:3.9
+# который содержит файлы ОС и интерпретатор Python 3.12.
+FROM python:3.9.13
 
 # Переходим в образе в директорию /app: в ней будем хранить код проекта.
 # Если директории с указанным именем нет, она будет создана. 
@@ -12,10 +12,15 @@ WORKDIR /app
 # в текущую директорию (текущая директория — это /app).
 COPY requirements.txt .
 
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
+    python3 -m ensurepip && \
+    pip install --upgrade pip setuptools
+
+RUN pip install gunicorn==23.0.0 
+
 # Выполнить в текущей директории команду терминала
 # для установки зависимостей.
 RUN pip install -r requirements.txt --no-cache-dir
-RUN pip install python-dotenv
 
 # Скопировать всё необходимое содержимое 
 # той директории локального компьютера, где сохранён Dockerfile,
@@ -23,4 +28,4 @@ RUN pip install python-dotenv
 COPY . .
 
 # При старте контейнера запустить сервер разработки.
-CMD ["python", "manage.py", "runserver", "0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "backend.wsgi"]
